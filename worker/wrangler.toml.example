@@ -1,0 +1,6 @@
+name = "barreplay-news"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+[vars]
+HF_REPO_ID = "YOUR_HF_USERNAME/YOUR_DATASET_NAME"
+HF_REVISION = "main"

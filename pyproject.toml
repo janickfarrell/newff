@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "barreplay-news-pipeline"
+version = "1.0.0"
+description = "Forex Factory GMT news pipeline for BarReplay"
+requires-python = ">=3.11"
+dependencies = ["requests==2.32.5", "beautifulsoup4==4.14.2", "huggingface_hub==0.35.3"]
+[project.scripts]
+barreplay-news = "barreplay_news.cli:main"
+[tool.setuptools.packages.find]
+include = ["barreplay_news*"]
