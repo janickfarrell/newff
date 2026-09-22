@@ -1,0 +1,42 @@
+name: Download and publish date range
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: Start date (YYYY-MM-DD, GMT)
+        required: true
+        type: string
+      end_date:
+        description: End date (YYYY-MM-DD, GMT)
+        required: true
+        type: string
+concurrency:
+  group: huggingface-news-publish
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  range:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: Scrape requested range
+        run: |
+          mkdir -p dist
+          python -m barreplay_news scrape --start "${{ inputs.start_date }}" --end "${{ inputs.end_date }}" --output dist/range.csv
+      - name: Publish to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO_ID: ${{ vars.HF_REPO_ID }}
+        run: python -m barreplay_news publish --input dist/range.csv --start "${{ inputs.start_date }}" --end "${{ inputs.end_date }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forex-news-${{ inputs.start_date }}-${{ inputs.end_date }}
+          path: dist/range.csv
+          retention-days: 14
