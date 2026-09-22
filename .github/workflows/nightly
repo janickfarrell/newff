@@ -1,0 +1,37 @@
+name: Publish previous day news
+on:
+  schedule:
+    - cron: "20 0 * * *"
+  workflow_dispatch:
+concurrency:
+  group: huggingface-news-publish
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  yesterday:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - id: dates
+        shell: python
+        run: |
+          from datetime import datetime, timezone, timedelta
+          import os
+          day=(datetime.now(timezone.utc)-timedelta(days=1)).date().isoformat()
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write(f"day={day}\n")
+      - name: Scrape previous GMT day
+        run: |
+          mkdir -p dist
+          python -m barreplay_news scrape --start "${{ steps.dates.outputs.day }}" --end "${{ steps.dates.outputs.day }}" --output dist/yesterday.csv
+      - name: Publish to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO_ID: ${{ vars.HF_REPO_ID }}
+        run: python -m barreplay_news publish --input dist/yesterday.csv --start "${{ steps.dates.outputs.day }}" --end "${{ steps.dates.outputs.day }}"
